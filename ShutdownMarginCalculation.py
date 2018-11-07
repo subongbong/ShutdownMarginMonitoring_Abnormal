@@ -83,6 +83,10 @@ class DataShare:
         self.list_mem_number.append(self.number)
 
         self.ShutdownMarginCalculation()
+        self.Detect()
+        self.Diagnosis()
+        self.Suggest()
+        self.text()
         self.number += 1
 
         # 3. 이전의 그렸던 그래프를 지우는거야.
@@ -135,89 +139,85 @@ class DataShare:
                 idx += 1
 
     def ShutdownMarginCalculation(self):
-        # self.Detect()
-        # self.Diagnosis()
-        # self.Suggest()
-
         subdata=[]
 
         # 1. time
-        Time = self.number
-        print(Time)
-        subdata.append(Time)
+        self.Time = self.number
+        print(self.Time)
+        subdata.append(self.Time)
 
         # 2. BOL, 현출력% -> 0% 하기위한 출력 결손량 계산
-        ReactorPower = self.mem['QPROLD']['Val']*100
-        PowerDefect_BOL = para.TotalPowerDefect_BOL * ReactorPower / para.HFP
-        print(PowerDefect_BOL)
-        subdata.append(PowerDefect_BOL)
+        self.ReactorPower = self.mem['QPROLD']['Val']*100
+        self.PowerDefect_BOL = para.TotalPowerDefect_BOL * self.ReactorPower / para.HFP
+        print(self.PowerDefect_BOL)
+        subdata.append(self.PowerDefect_BOL)
 
         # 3. EOL, 현출력% -> 0% 하기위한 출력 결손량 계산
-        PowerDefect_EOL = para.TotalPowerDefect_EOL * ReactorPower / para.HFP
-        print(PowerDefect_EOL)
-        subdata.append(PowerDefect_EOL)
+        self.PowerDefect_EOL = para.TotalPowerDefect_EOL * self.ReactorPower / para.HFP
+        print(self.PowerDefect_EOL)
+        subdata.append(self.PowerDefect_EOL)
 
         # 4. 현재 연소도, 현출력% -> 0% 하기위한 출력 결손량 계산
         A = para.Burnup_EOL - para.Burnup_BOL
-        B = PowerDefect_EOL - PowerDefect_BOL
+        B = self.PowerDefect_EOL - self.PowerDefect_BOL
         C = para.Burnup - para.Burnup_BOL
 
-        PowerDefect_Burnup = B * C / A + PowerDefect_BOL
-        print(PowerDefect_Burnup)
-        subdata.append(PowerDefect_Burnup)
+        self.PowerDefect_Burnup = B * C / A + self.PowerDefect_BOL
+        print(self.PowerDefect_Burnup)
+        subdata.append(self.PowerDefect_Burnup)
 
         # 5. 반응도 결손량을 계산
-        PowerDefect_Final = PowerDefect_Burnup + para.VoidCondtent
-        print(PowerDefect_Final)
-        subdata.append(PowerDefect_Final)
+        self.PowerDefect_Final = self.PowerDefect_Burnup + para.VoidCondtent
+        print(self.PowerDefect_Final)
+        subdata.append(self.PowerDefect_Final)
 
         # 6. 운전불가능 제어봉 제어능을 계산
-        InoperableRodWorth = para.InoperableRodNumber * para.WorstStuckRodWorth
-        print(InoperableRodWorth)
-        subdata.append(InoperableRodWorth)
+        self.InoperableRodWorth = para.InoperableRodNumber * para.WorstStuckRodWorth
+        print(self.InoperableRodWorth)
+        subdata.append(self.InoperableRodWorth)
 
         # 7. 비정상 제어봉 제어능을 계산
         if para.AbnormalRodName == 'C':
-            AbnormalRodWorth = para.BankWorth_C / 8 * para.AbnormalRodNumber
-            print(AbnormalRodWorth)
-            subdata.append(AbnormalRodWorth)
+            self.AbnormalRodWorth = para.BankWorth_C / 8 * para.AbnormalRodNumber
+            print(self.AbnormalRodWorth)
+            subdata.append(self.AbnormalRodWorth)
         elif para.AbnormalRodName == 'A':
-            AbnormalRodWorth = para.BankWorth_A / 8 * para.AbnormalRodNumber
-            print(AbnormalRodWorth)
-            subdata.append(AbnormalRodWorth)
+            self.AbnormalRodWorth = para.BankWorth_A / 8 * para.AbnormalRodNumber
+            print(self.AbnormalRodWorth)
+            subdata.append(self.AbnormalRodWorth)
         elif para.AbnormalRodName == 'B':
-            AbnormalRodWorth = para.BankWorth_B / 8 * para.AbnormalRodNumber
-            print(AbnormalRodWorth)
-            subdata.append(AbnormalRodWorth)
+            self.AbnormalRodWorth = para.BankWorth_B / 8 * para.AbnormalRodNumber
+            print(self.AbnormalRodWorth)
+            subdata.append(self.AbnormalRodWorth)
         elif para.AbnormalRodName == 'D':
-            AbnormalRodWorth = para.BankWorth_D / 8 * para.AbnormalRodNumber
-            print(AbnormalRodWorth)
-            subdata.append(AbnormalRodWorth)
+            self.AbnormalRodWorth = para.BankWorth_D / 8 * para.AbnormalRodNumber
+            print(self.AbnormalRodWorth)
+            subdata.append(self.AbnormalRodWorth)
 
         # 8. 운전 불능, 비정상 제어봉 제어능의 합 계산
-        InoperableAbnormal_RodWorth = InoperableRodWorth + AbnormalRodWorth
-        print(InoperableAbnormal_RodWorth)
-        subdata.append(InoperableAbnormal_RodWorth)
+        self.InoperableAbnormal_RodWorth = self.InoperableRodWorth + self.AbnormalRodWorth
+        print(self.InoperableAbnormal_RodWorth)
+        subdata.append(self.InoperableAbnormal_RodWorth)
 
         # 9. 현 출력에서의 정지여유도 계산
-        ShutdownMargin = para.TotalRodWorth - InoperableAbnormal_RodWorth - PowerDefect_Final
-        print(ShutdownMargin)
-        subdata.append(ShutdownMargin)
-        self.shut.append(ShutdownMargin)
+        self.ShutdownMargin = para.TotalRodWorth - self.InoperableAbnormal_RodWorth - self.PowerDefect_Final
+        print(self.ShutdownMargin)
+        subdata.append(self.ShutdownMargin)
+        self.shut.append(self.ShutdownMargin)
 
         # 10. 정지여유도 제한치를 만족하는지 비교
-        if ShutdownMargin >= para.ShutdownMarginValue:
-            label = "만족"
+        if self.ShutdownMargin >= para.ShutdownMarginValue:
+            self.label = "만족"
         else:
-            label = "불만족"
+            self.label = "불만족"
 
-        with open('./data_save.txt', 'a') as f:
-            f.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(Time, PowerDefect_BOL,PowerDefect_EOL,PowerDefect_Burnup,
-                                   PowerDefect_Final, InoperableRodWorth, AbnormalRodWorth, InoperableAbnormal_RodWorth,
-                                   ShutdownMargin, label))
+        # with open('./data_save.txt', 'a') as f:
+        #     f.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(self.Time, self.PowerDefect_BOL,self.PowerDefect_EOL,self.PowerDefect_Burnup,
+        #                                                               self.PowerDefect_Final, self.InoperableRodWorth, self.AbnormalRodWorth, self.InoperableAbnormal_RodWorth,
+        #                                                               self.ShutdownMargin, self.label))
 
 
-        if ShutdownMargin >= para.ShutdownMarginValue:
+        if self.ShutdownMargin >= para.ShutdownMarginValue:
             self.result.append(1) #만족
             return print('만족'), subdata.append(1), subdata.append('ShutdownMargin'), self.data.append(subdata)
         else:
@@ -259,12 +259,22 @@ class DataShare:
 
         if self.Diagnosis_bin[0] == 'LCO 3.1.1' and self.Diagnosis_bin[1] == 0:
             boron=(A-B)/C
+            self.boron_cons = 'KBCDO16'
+            self.boron_cons_target = self.mem['KBCDO16']['Val']+boron
+            self.boration = boron
             print('KBCDO16')
             print(self.mem['KBCDO16']['Val']+boron)
-            print(boron)
+            print('boration: {}'.format(boron))
 
         else:
             print('??')
+
+    def text(self):
+        with open('./data_save.txt', 'a') as f:
+            f.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t\t{}\t{}\t\t{}\n'.format(self.Time, self.PowerDefect_BOL,self.PowerDefect_EOL,self.PowerDefect_Burnup,
+                                                                      self.PowerDefect_Final, self.InoperableRodWorth, self.AbnormalRodWorth, self.InoperableAbnormal_RodWorth,
+                                                                      self.ShutdownMargin, self.label, self.Detect_bin, self.boration, self.boron_cons, self.boron_cons_target))
+
 
 if __name__ == '__main__':
 
@@ -273,9 +283,10 @@ if __name__ == '__main__':
     test.reset()
     test.make_gp()
     test.write()
-    test.Detect()
-    test.Diagnosis()
-    test.Suggest()
+    # test.Detect()
+    # test.Diagnosis()
+    # test.Suggest()
+    # test.text()
 
 
 
