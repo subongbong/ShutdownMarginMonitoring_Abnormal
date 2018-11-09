@@ -30,7 +30,7 @@ class DataShare:
         self.mem = {}  # {'PID val': {'Sig': sig, 'Val': val, 'Num': idx }}
         self.list_mem = {}          ##
         self.list_mem_number = []   ##
-        self.number = 0             ##
+        self.Time = 0             ##
 
         self.result=[]
 
@@ -80,14 +80,14 @@ class DataShare:
         # 1. 값을 로드.
         # 2. 로드한 값을 리스로 저장.
         self.update_mem()
-        self.list_mem_number.append(self.number)
+        self.list_mem_number.append(self.Time)
 
         self.ShutdownMarginCalculation()
         self.Detect()
         self.Diagnosis()
         self.Suggest()
         self.text()
-        self.number += 1
+        self.Time += 1
 
         # 3. 이전의 그렸던 그래프를 지우는거야.
         self.ax1.clear()
@@ -139,10 +139,11 @@ class DataShare:
                 idx += 1
 
     def ShutdownMarginCalculation(self):
-        subdata=[]
+        subdata = []
 
         # 1. time
-        self.Time = self.number
+        # self.Time = self.number
+        # self.number 를 self.Time 으로 변경
         print(self.Time)
         subdata.append(self.Time)
 
@@ -205,23 +206,20 @@ class DataShare:
         subdata.append(self.ShutdownMargin)
         self.shut.append(self.ShutdownMargin)
 
-        # 10. 정지여유도 제한치를 만족하는지 비교
-        if self.ShutdownMargin >= para.ShutdownMarginValue:
-            self.label = "만족"
-        else:
-            self.label = "불만족"
 
         # with open('./data_save.txt', 'a') as f:
         #     f.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(self.Time, self.PowerDefect_BOL,self.PowerDefect_EOL,self.PowerDefect_Burnup,
         #                                                               self.PowerDefect_Final, self.InoperableRodWorth, self.AbnormalRodWorth, self.InoperableAbnormal_RodWorth,
         #                                                               self.ShutdownMargin, self.label))
 
-
+        # 10. 정지여유도 제한치를 만족하는지 비교
         if self.ShutdownMargin >= para.ShutdownMarginValue:
             self.result.append(1) #만족
+            self.label = "만족"
             return print('만족'), subdata.append(1), subdata.append('ShutdownMargin'), self.data.append(subdata)
         else:
             self.result.append(0) #불만족
+            self.label = "불만족"
             return print('불만족'), subdata.append(0), subdata.append('ShutdownMargin'), self.data.append(subdata)
 
 
@@ -235,11 +233,12 @@ class DataShare:
         # print(len(self.data))
         # A=len(self.data)
 
-        print(self.data[self.A-1][10])
-        print(self.data[self.A-1][9])
+        print(self.data[-1][10])
+        print(self.data[-1][9])
 
-        if self.data[self.A-1][10] == 'ShutdownMargin' and self.data[self.A-1][9] == 0 :
-            self.Detect_bin = 'LCO 3.1.1'
+        if self.data[-1][10] == 'ShutdownMargin' and self.data[-1][9] == 0:
+            # self.Detect_bin = 'LCO 3.1.1'
+            self.Current_Detect = 'LCO 3.1.1'
             print('LCO 3.1.1')
         else:
             print('??')
@@ -249,16 +248,16 @@ class DataShare:
         if self.Detect_bin == 'LCO 3.1.1':
             self.Diagnosis_bin=['LCO 3.1.1', 0]
             print(self.Diagnosis_bin)
-        else :
+        else:
             print('?')
 
     def Suggest(self):
-        A = self.data[self.A - 1][8]
+        A = self.data[-1][8]
         B = 1770
         C = -5.9
 
         if self.Diagnosis_bin[0] == 'LCO 3.1.1' and self.Diagnosis_bin[1] == 0:
-            boron=(A-B)/C
+            boron = (A-B)/C
             self.boron_cons = 'KBCDO16'
             self.boron_cons_target = self.mem['KBCDO16']['Val']+boron
             self.boration = boron
@@ -271,9 +270,22 @@ class DataShare:
 
     def text(self):
         with open('./data_save.txt', 'a') as f:
-            f.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t\t{}\t{}\t\t{}\n'.format(self.Time, self.PowerDefect_BOL,self.PowerDefect_EOL,self.PowerDefect_Burnup,
-                                                                      self.PowerDefect_Final, self.InoperableRodWorth, self.AbnormalRodWorth, self.InoperableAbnormal_RodWorth,
-                                                                      self.ShutdownMargin, self.label, self.Detect_bin, self.boration, self.boron_cons, self.boron_cons_target))
+            # f.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t\t{}\t{}\t\t{}\n'.format(self.Time, self.PowerDefect_BOL,self.PowerDefect_EOL,self.PowerDefect_Burnup,
+            #                                                           self.PowerDefect_Final, self.InoperableRodWorth, self.AbnormalRodWorth, self.InoperableAbnormal_RodWorth,
+            #                                                           self.ShutdownMargin, self.label, self.Detect_bin, self.boration, self.boron_cons, self.boron_cons_target))
+            print_out_value = [self.Time, self.PowerDefect_BOL, self.PowerDefect_EOL, self.PowerDefect_Burnup,
+                               self.PowerDefect_Final, self.InoperableRodWorth, self.AbnormalRodWorth,
+                               self.InoperableAbnormal_RodWorth, self.ShutdownMargin, self.label,
+                               self.Detect_bin, self.boration, self.boron_cons, self.boron_cons_target]
+
+            for i in print_out_value[:-2]:
+                f.write('{}\t'.format(i))
+            f.write('{}\t\t'.format(print_out_value[-2]))
+            f.write('{}\n'.format(print_out_value[-1]))
+            '''
+            print_out_value 리스트의 0번째부터 11 번째 까지 데이터 쓰고
+            12번째는 텝이 2개 널고 13번째(마지막)에서는 엔터까지 쓰고 종료
+            '''
 
 
 if __name__ == '__main__':
